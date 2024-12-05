@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chess</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background-image: url('images/background.jpg');
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-position: center;
+            }
+
+            .chessboard {
+                display: grid;
+                grid-template-columns: repeat(8, 60px);
+                grid-template-rows: repeat(8, 60px);
+                gap: 0;
+                border: 2px solid #000;
+                position: relative;
+            }
+
+            .square {
+                width: 60px;
+                height: 60px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            /* Use JavaScript to set the background color dynamically */
+            .white-square {
+                background-color: #f0d9b5;
+            }
+
+            .black-square {
+                background-color: #b58863;
+            }
+
+            .piece {
+                width: 60px;
+                height: 60px;
+                position: absolute;
+                cursor: pointer;
+            }
+
+            /*.white-piece {
+                background-image: url('images/white_pawn.png');
+                background-size: cover;
+            }
+
+            .black-piece {
+                background-image: url('images/black_pawn.png');
+                background-size: cover;
+            }*/
+            .white-piece[data-piece-name="pawn"] {
+                background-image: url('images/white_pawn.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+
+            }
+            .white-piece[data-piece-name="knight"] {
+                background-image: url('images/white_knight.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+
+            }
+            .white-piece[data-piece-name="bishop"] {
+                background-image: url('images/white_bishop.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+
+            }
+            .white-piece[data-piece-name="rook"] {
+                background-image: url('images/white_rook.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+
+            }
+            .white-piece[data-piece-name="queen"] {
+                background-image: url('images/white_queen.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+
+            }
+            .white-piece[data-piece-name="king"] {
+                background-image: url('images/white_king.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+
+            }
+            .black-piece[data-piece-name="pawn"] {
+                background-image: url('images/black_pawn.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+
+            }
+            .black-piece[data-piece-name="knight"] {
+                background-image: url('images/black_knight.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+            }
+            .black-piece[data-piece-name="bishop"] {
+                background-image: url('images/black_bishop.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+            }
+            .black-piece[data-piece-name="rook"] {
+                background-image: url('images/black_rook.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+            }
+            .black-piece[data-piece-name="queen"] {
+                background-image: url('images/black_queen.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+            }
+            .black-piece[data-piece-name="king"] {
+                background-image: url('images/black_king.png');
+                background-size: contain; /* Adjusts image to fit the element */
+                background-repeat: no-repeat;
+                background-position: center;
+            }
+
+            .dragging {
+                opacity: 0.5;
+            }
+        </style>
+    </head>
+    <body>
+        <p style="display: none;"><span id="wp-var" th:text="${wpPlayer}"></span></p>
+        <p style="display: none;"><span id="bp-var" th:text="${bpPlayer}"></span></p>
+        <div class="chessboard" id="chessboard">
+            <!-- Squares will be generated here -->
+        </div>
+        <button type="button" onclick="flip()">Flip board</button>
+        <label class="switch">
+            <input type="checkbox">
+            <span class="slider round"></span>
+        </label>
+        <label class="switch">
+            <input type="checkbox">
+            <span class="slider round"></span>
+        </label>
+        <script>
+            // Creating the chessboard
+            const chessboard = document.getElementById("chessboard");
+            chessboard.draggable = false;
+
+            const pieces = [
+                { type: "white", name: "king", position: [0, 4] },
+                { type: "black", name: "king", position: [7, 4] },
+                { type: "white", name: "queen", position: [0, 3] },
+                { type: "black", name: "queen", position: [7, 3] },
+                { type: "white", name: "rook", position: [0, 0] },
+                { type: "black", name: "rook", position: [7, 0] },
+                { type: "white", name: "rook", position: [0, 7] },
+                { type: "black", name: "rook", position: [7, 7] },
+                { type: "white", name: "bishop", position: [0, 2] },
+                { type: "black", name: "bishop", position: [7, 2] },
+                { type: "white", name: "bishop", position: [0, 5] },
+                { type: "black", name: "bishop", position: [7, 5] },
+                { type: "white", name: "knight", position: [0, 1] },
+                { type: "black", name: "knight", position: [7, 1] },
+                { type: "white", name: "knight", position: [0, 6] },
+                { type: "black", name: "knight", position: [7, 6] },
+                { type: "white", name: "pawn", position: [1, 0] },
+                { type: "black", name: "pawn", position: [6, 0] },
+                { type: "white", name: "pawn", position: [1, 1] },
+                { type: "black", name: "pawn", position: [6, 1] },
+                { type: "white", name: "pawn", position: [1, 2] },
+                { type: "black", name: "pawn", position: [6, 2] },
+                { type: "white", name: "pawn", position: [1, 3] },
+                { type: "black", name: "pawn", position: [6, 3] },
+                { type: "white", name: "pawn", position: [1, 4] },
+                { type: "black", name: "pawn", position: [6, 4] },
+                { type: "white", name: "pawn", position: [1, 5] },
+                { type: "black", name: "pawn", position: [6, 5] },
+                { type: "white", name: "pawn", position: [1, 6] },
+                { type: "black", name: "pawn", position: [6, 6] },
+                { type: "white", name: "pawn", position: [1, 7] },
+                { type: "black", name: "pawn", position: [6, 7] },
+            ];
+            // Create board squares and color them
+            for (let row = 7; row >= 0 ; row--) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement("div");
+                    square.classList.add("square");
+
+                    // Alternate the colors based on row and column
+                    if ((row + col) % 2 === 0) {
+                        square.classList.add("black-square");
+                    } else {
+                        square.classList.add("white-square");
+                    }
+                    //square.style.pointerEvents = "none";
+                    square.draggable = false;
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    chessboard.appendChild(square);
+                }
+            }
+            // Place the pieces on the board
+            /*pieces.forEach(piece => {
+                const square = document.querySelector(`[data-row="${piece.position[0]}"][data-col="${piece.position[1]}"]`);
+                const pieceElement = document.createElement("div");
+                pieceElement.classList.add("piece");
+                pieceElement.classList.add(piece.type + "-piece");
+                pieceElement.draggable = true;
+                pieceElement.dataset.pieceName = piece.name;
+                pieceElement.addEventListener("dragstart", handleDragStart);
+                pieceElement.addEventListener("dragend", handleDragEnd);
+                pieceElement.dataset.row = piece.position[0];
+                pieceElement.dataset.col = piece.position[1];
+                square.appendChild(pieceElement);
+
+                if (pieceElement.draggable) {
+                    pieceElement.style.pointerEvents = "none";
+                }
+                
+            });*/
+            
+            
+            // Handle drag events
+            let draggedPiece = null;
+            let chosenPiece = null;
+            let legalMoves = null;
+            let wTurn = true;
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const wpPlayer = document.getElementById("wp-var").textContent.trim();
+                const bpPlayer = document.getElementById("bp-var").textContent.trim();
+
+                runGame(wpPlayer === "true", bpPlayer === "true"); // Convert to boolean
+            });
+
+            async function init(wHuman, bHuman) {
+                newBoard = null;
+                await fetch ("http://localhost:8080/game_init", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        wHuman: wHuman,
+                        bHuman: bHuman
+                    })
+                });
+                response = await fetch("http://localhost:8080/getBoard", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+                newBoard = await response.json()
+                console.log(newBoard)
+                updateBoard(newBoard);
+            }
+
+            async function syncBoard() {
+                response = await fetch("http://localhost:8080/getBoard", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+                newBoard = await response.json()
+                console.log(newBoard)
+                updateBoard(newBoard);
+            }
+
+            async function runGame(wHuman, bHuman) {
+                await init(wHuman, bHuman);
+                
+                while(true) {
+                    if (wTurn) {
+                        if (wHuman) {
+                            document.querySelectorAll(".white-piece").forEach(piece => {
+                                piece.style.pointerEvents = "auto";
+                            });
+                            response = await fetch("http://localhost:8080/getWebMoves", {
+                                method: "GET",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                }
+                            });
+                            legalMoves = await response.json();
+                            moveEvent = await waitForMove();
+                            console.log("alright nice");
+                            /*response = await fetch("http://localhost:8080/webMove", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify(moveEvent.move)
+                            });*/
+                        }
+                        else {
+                            response = await fetch("http://localhost:8080/getComputerMove", {
+                                method: "GET",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                }
+                            });
+                            newBoard = await response.json();
+                            updateBoard(newBoard);
+                        }
+                    }
+                    else {
+                        if (bHuman) {
+                            document.querySelectorAll(".black-piece").forEach(piece => {
+                                piece.style.pointerEvents = "auto";
+
+                            });
+                            response = await fetch("http://localhost:8080/getWebMoves", {
+                                method: "GET",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                }
+                            });
+                            legalMoves = await response.json();
+                            moveEvent = await waitForMove();
+                            console.log("alright nice");
+                            /*response = await fetch("http://localhost:8080/webMove", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify(moveEvent.move)
+                            });*/
+                        }
+                        else {
+                            response = await fetch("http://localhost:8080/getComputerMove", {
+                                method: "GET",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                }
+                            });
+                            newBoard = await response.json();
+                            updateBoard(newBoard);
+                        }
+                    }
+                    response = await fetch("http://localhost:8080/turn", {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+                    wTurn = await response.json();
+                    await syncBoard();
+                    console.log(wTurn);
+                }
+            }
+
+            function flip() {
+                const divs = Array.from(chessboard.children); // Get all div elements inside the container as an array
+                divs.reverse().forEach(div => chessboard.appendChild(div)); // Reverse and re-append
+            }
+
+            function updateBoard(newBoard) {
+                document.querySelectorAll(".square").forEach(square => {
+                    r = square.dataset.row;
+                    c = square.dataset.col;
+                    console.log(r + " and " + c + "\n")
+                    console.log(newBoard);
+                    newPiece = newBoard[r][c];
+                    if (square.hasChildNodes()) {
+                        square.removeChild(square.firstChild);
+                    }
+                    pieceType = null;
+                    switch (newPiece) {
+                        case 0:
+                            break;
+                        case 1:
+                            pieceType = "pawn";
+                            break;
+                        case 2:
+                            pieceType = "queen";
+                            break;
+                        case 3:
+                            pieceType = "bishop";
+                            break;
+                        case 4:
+                            pieceType = "knight";
+                            break;
+                        case 5:
+                            pieceType = "rook";
+                            break;
+                        case 6:
+                            pieceType = "rook";
+                            break;
+                        case 7:
+                            pieceType = "pawn";
+                            break;
+                        case 8:
+                            pieceType = "king";
+                            break;
+                        case 9:
+                            pieceType = "king";
+                            break;
+                        case -1:
+                            pieceType = "pawn";
+                            break;
+                        case -2:
+                            pieceType = "queen";
+                            break;
+                        case -3:
+                            pieceType = "bishop";
+                            break;
+                        case -4:
+                            pieceType = "knight";
+                            break;
+                        case -5:
+                            pieceType = "rook";
+                            break;
+                        case -6:
+                            pieceType = "rook";
+                            break;
+                        case -7:
+                            pieceType = "pawn";
+                            break;
+                        case -8:
+                            pieceType = "king";
+                            break;
+                        case -9:
+                            pieceType = "king";
+                            break;
+                    }
+                    if (newPiece != 0) {
+                    color = null;
+                    if (newPiece > 0) {
+                        color = "white";
+                    }
+                    else {
+                        color = "black"
+                    }
+                    const pieceElement = document.createElement("div");
+                    pieceElement.classList.add("piece");
+                    pieceElement.classList.add(color + "-piece");
+                    pieceElement.draggable = true;
+                    pieceElement.dataset.pieceName = pieceType;
+                    pieceElement.addEventListener("dragstart", handleDragStart);
+                    pieceElement.addEventListener("dragend", handleDragEnd);
+                    pieceElement.dataset.row = r;
+                    pieceElement.dataset.col = c;
+                    square.appendChild(pieceElement);
+                    if (pieceElement.draggable) {
+                        pieceElement.style.pointerEvents = "none";
+                    }
+                    document.querySelectorAll(".piece").forEach(piece => {
+                        piece.classList.remove("dragging");
+                    });
+                    }
+                });
+                
+            }
+            function handleDragStart(event) {
+                console.log("hi");
+                if (event.target.classList.contains("piece")) {
+                    draggedPiece = event.target;
+                    draggedPiece.classList.add("dragging");
+                    document.querySelectorAll(".piece").forEach(piece => {
+                        if (piece != draggedPiece) {
+                            piece.style.pointerEvents = "none";
+                        }
+                    });
+                }
+                else {
+                    event.preventDefault();
+                }
+                
+                
+            }
+
+            function handleDragEnd(event) {
+                document.querySelectorAll(".piece").forEach(piece => {
+                    piece.style.pointerEvents = "auto";
+                });
+                if (draggedPiece != null) {
+                    draggedPiece.classList.remove("dragging");
+                }
+                
+                //draggedPiece = null;
+            }
+
+            
+            async function postMove(webMove) {
+                response = await fetch("http://localhost:8080/webMove", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({webMove, wTurn})
+                });
+                if (response.ok) {
+                    console.log("what the sigma");
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            
+            function triggerMoveMadeEvent(webMove) {
+                const event = new CustomEvent("moveMade", {
+                    move: webMove,
+                });
+                console.log("it made the move " + webMove);
+                chessboard.dispatchEvent(event);
+            }
+
+            function waitForMove() {
+                return new Promise((resolve) => {
+                    chessboard.addEventListener("moveMade", resolve, { once: true });
+                });
+            }
+
+            // Handle the drop event
+            chessboard.addEventListener("dragover", function(event) {
+                event.preventDefault();
+                const target = event.target;
+                if (target.classList.contains("square") && !target.contains(draggedPiece) && draggedPiece != null) {
+                    target.style.backgroundColor = "#bbb";
+                }
+                else {
+                }
+                
+            });
+
+            chessboard.addEventListener("dragleave", function(event) {
+                const target = event.target;
+                if (target.classList.contains("square")) {
+                    target.style.backgroundColor = "";
+                }
+            });
+
+            chessboard.addEventListener("drop", async function(event) {
+                const target = event.target;
+                if (target.classList.contains("square")) {
+                    target.style.backgroundColor = "";
+                }
+                if (legalMoves != null && target.classList.contains("square") && !target.contains(draggedPiece) && draggedPiece != null) {
+                    moveIndex = null;
+                    for (currMove of legalMoves) {
+                        if (currMove.start[0] == draggedPiece.dataset.row && currMove.start[1] == draggedPiece.dataset.col) {
+                            if (currMove.end[0] == target.dataset.row && currMove.end[1] == target.dataset.col) {
+                                if (currMove.promotion == true) {
+                                    console.log("wow a promotion");
+                                    console.log("wowo its a " + currMove.afterPiece);
+                                    if (currMove.afterPiece == 2 || currMove.afterPiece == -2) {
+                                        moveIndex = currMove.index;
+                                        response = await postMove(moveIndex)
+                                        console.log(response);
+                                        if (response) {
+                                            if (target.hasChildNodes()) {
+                                                target.removeChild(target.firstChild);
+                                            }
+                                            target.appendChild(draggedPiece);
+                                            draggedPiece.dataset.row = target.dataset.row;
+                                            draggedPiece.dataset.col = target.dataset.col;
+                                            legalMoves = null;
+                                            triggerMoveMadeEvent(moveIndex);
+                                            break;
+                                        }
+                                        else {
+                                            break;
+                                        }
+                                    }
+                                }
+                                else {
+                                    moveIndex = currMove.index;
+                                    response = await postMove(moveIndex)
+                                    console.log(response);
+                                    if (response) {
+                                        if (target.hasChildNodes()) {
+                                            target.removeChild(target.firstChild);
+                                        }
+                                        target.appendChild(draggedPiece);
+                                        draggedPiece.dataset.row = target.dataset.row;
+                                        draggedPiece.dataset.col = target.dataset.col;
+                                        legalMoves = null;
+                                        triggerMoveMadeEvent(moveIndex);
+                                        break;
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                }
+                                
+                            }
+                        }
+                    }
+                    
+                }
+
+                event.preventDefault();
+                draggedPiece.classList.remove("dragging");
+                draggedPiece = null;
+                
+            });
+
+        </script>
+
+    </body>
+</html>

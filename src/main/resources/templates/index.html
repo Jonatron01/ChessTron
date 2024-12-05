@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chess</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background-image: url('images/menu.jpg');
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-position: center;
+            }
+            .switch { 
+            position: relative; 
+            display: inline-block; 
+            width: 90px; 
+            height: 51px; 
+            } 
+            .switch input {
+                opacity: 0;  /* Hides the checkbox */
+                position: absolute; /* Keeps it clickable behind the slider */
+                width: 100%;
+                height: 100%;
+                z-index: 1;  /* Ensures the checkbox is above the background but behind the slider */
+            }
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ff8b8b;
+                transition: 0.4s;
+                border-radius: 25px;
+            }
+
+            .slider:before,
+            .slider:after {
+                position: absolute;
+                content: "";
+                height: 39px;
+                width: 39px;
+                left: 6px;
+                bottom: 6px;
+                transition: 0.4s;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 12px;
+                font-weight: bold;
+                color: white;
+                border-radius: 50%;
+            }
+
+            /* Text for White Pieces (Default State) */
+
+            /* Text for Black Pieces (Checked State) */
+            .white-pieces-switch:before {
+                background-color: white;
+                color: rgb(0, 0, 0);
+                background-image: url('images/white_king.png');
+                background-size: cover;
+            }
+
+            /* Toggle State for White Pieces */
+            input:checked + .white-pieces-switch:before {
+                transform: translateX(39px); /* Slide to the right */
+            }
+
+            input:checked + .white-pieces-switch:after {
+                transform: translateX(39px); /* Move to the default position */
+
+            }
+
+            /* Text for Black Pieces (Default State) */
+
+
+            /* Text for White Pieces (Checked State) */
+            .black-pieces-switch:after {
+
+                background-color: rgb(255, 255, 255);
+                color: black;
+                background-image: url('images/black_king.png');
+                background-size: cover;
+            }
+
+            /* Toggle State for Black Pieces */
+            input:checked + .black-pieces-switch:before {
+                transform: translateX(39px); /* Slide to the right */
+            }
+
+            input:checked + .black-pieces-switch:after {
+                transform: translateX(39px); /* Move to the default position */
+            }
+
+
+
+            input:checked + .slider {
+                background-color: #88f1ff;
+            }
+            
+            .text { 
+                display: inline-block; 
+                margin-left: 10px; 
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            Toggle CPU
+        </div>
+        <label class="switch"> 
+            <input type="checkbox" id="white-pieces"> 
+            <span class="slider white-pieces-switch"></span> 
+            <div class="text" id="text"></div> 
+        </label>
+        <label class="switch"> 
+            <input type="checkbox" id="black-pieces"> 
+            <span class="slider black-pieces-switch"></span> 
+            <div class="text" id="text"></div> 
+        </label> 
+        <button type="button" onclick="startGame()">Start</button>
+    </body>
+    <script>
+        async function startGame() {
+            var wp = true; //default
+            var bp = false; //default
+            if (document.getElementById('white-pieces').checked) {
+                wp = false;
+            }
+            else {
+                wp = true;
+            }
+            if (document.getElementById('black-pieces').checked) {
+                bp = false;
+            }
+            else {
+                bp = true;
+            }
+            url = 'http://localhost:8080/game-page?wpPlayer='+wp+'&bpPlayer='+bp
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        // The page content is returned as HTML, which is now handled by the browser
+                        return response.text(); // You could also return response.json() if you're expecting JSON
+                    } else {
+                        throw new Error('Failed to load the page');
+                    }
+                })
+                .then(html => {
+                    // Optionally, do something with the response (like insert it into a specific part of the page)
+                    console.log(html); // Or insert into a div like document.getElementById('content').innerHTML = html;
+                    window.location.href = '/game-page?wpPlayer=' + wp + '&bpPlayer=' + bp; // Alternatively, you can just redirect to the new page
+                })
+                .catch(error => {
+                    console.error('Error fetching the page:', error);
+                });
+            }
+        
+    </script>
+</html>
